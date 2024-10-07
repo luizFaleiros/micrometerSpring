@@ -1,0 +1,50 @@
+networks:
+  metricas:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: MY_GRAFANA
+    user: '0'
+    ports:
+      - 8000:3000
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - metricas
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: MY_PROMETHEUS
+    user: '0'
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus_data:/data:rw
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/data'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+#    depends_on:
+#      - myapp
+    networks:
+      - metricas
+
+#  myapp:
+#    container_name: MY_APP
+#    build:
+#      context: ../
+#      dockerfile: ./docker/Dockerfile
+#    ports:
+#      - "8080:8080"
+#    networks:
+#      - metricas
